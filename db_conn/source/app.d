@@ -12,10 +12,9 @@ import vibe.data.bson;
 
 import dauth : makeHash, toPassword, parseHash;
 
-extern(C) ulong strlen (
-  scope const(char*) s
+extern (C) ulong strlen(
+    scope const(char*) s
 ) pure nothrow @nogc;
-
 
 struct DBConnection
 {
@@ -40,39 +39,40 @@ struct DBConnection
         client = connectMongoDB(connectionUrl);
         this.dbName = dbName;
     }
-    
-    bool verifyAdress(string email) {
+
+    bool verifyAdress(string email)
+    {
         int ok = 0;
         if (email[0] < 'A' || email[0] > 'z')
             return false;
 
-         for (int i = 1 ; i < strlen( cast(char*)email); i++ )
+        for (int i = 1; i < strlen(cast(char*) email); i++)
         {
-            if(email[i] == '@')
+            if (email[i] == '@')
                 ok = 1;
-            
-            if(ok == 1 && ( email[i] >= 'A' && email[i] <= 'z'))
+
+            if (ok == 1 && (email[i] >= 'A' && email[i] <= 'z'))
                 ok = 2;
-            
-            if(ok == 2 && email[i] == '.')
+
+            if (ok == 2 && email[i] == '.')
                 ok = 3;
-            
-            if(ok == 3 && ( email[i] > 'A' && email[i] < 'z'))
-                ok = 4 ;
+
+            if (ok == 3 && (email[i] > 'A' && email[i] < 'z'))
+                ok = 4;
 
         }
         if (ok == 4)
             return true;
-        else 
+        else
             return false;
     }
 
     UserRet addUser(string email, string username, string password, string name = "", string desc = "")
-    {   
-        if ( !verifyAdress(email))
+    {
+        if (!verifyAdress(email))
             return UserRet.ERR_INVALID_EMAIL;
 
-        if(password == null)
+        if (password == null)
             return UserRet.ERR_NULL_PASS;
 
         MongoCollection users = client.getCollection(dbName ~ ".users");
@@ -81,7 +81,13 @@ struct DBConnection
 
         if (oneResult == Bson(null))
         {
-            users.insert(["_id": email, "username": username, "password": password, "name": name, "description": desc]);
+            users.insert([
+                "_id": email,
+                "username": username,
+                "password": password,
+                "name": name,
+                "description": desc
+            ]);
             return UserRet.OK;
         }
         return UserRet.ERR_USER_EXISTS;
@@ -90,10 +96,10 @@ struct DBConnection
 
     UserRet authUser(string email, string password)
     {
-        if ( !verifyAdress(email))
+        if (!verifyAdress(email))
             return UserRet.ERR_INVALID_EMAIL;
 
-        if(password == null)
+        if (password == null)
             return UserRet.ERR_NULL_PASS;
 
         MongoCollection users = client.getCollection(dbName ~ ".users");
@@ -114,9 +120,9 @@ struct DBConnection
 
         auto oneResult = users.findOne(["_id": email]);
 
-        if(oneResult == Bson(null))
+        if (oneResult == Bson(null))
             return UserRet.OK;
-        
+
         return UserRet.NOT_IMPLEMENTED;
     }
 
@@ -128,6 +134,19 @@ struct DBConnection
         string fileName;
         string digest;
         string securityLevel;
+
+        this(string userId, ubyte[] binData, string fileName, string digest)
+        {
+
+            auto bsonObjectID = BsonObjectID.generate();
+            this.id = bsonObjectID;
+            this.userId = userId;
+            this.fileName = fileName;
+
+            this.digest = digest;
+            this.securityLevel = "3";
+            this.binData = binData;
+        }
     }
 
     enum FileRet
@@ -140,7 +159,8 @@ struct DBConnection
 
     FileRet addFile(string userId, immutable ubyte[] binData, string fileName)
     {
-        if (binData == null){
+        if (binData == null)
+        {
             return FileRet.ERR_EMPTY_FILE;
         }
 
@@ -148,20 +168,18 @@ struct DBConnection
 
         auto dataDigest = digest!SHA512(binData).toHexString().to!string;
 
-        auto oneResult = files.findOne(["binData": cast(char[])binData]);
+        auto oneResult = files.findOne(["digest": dataDigest]);
 
-        if (oneResult != Bson(null)) {
+        if (oneResult != Bson(null))
+        {
             return FileRet.FILE_EXISTS;
         }
 
-        // PROBABLY TODO
-        files.insert([
-            "userId": userId,
-            "binData": cast(char[])binData,
-            "fileName": fileName,
-            "digest":  dataDigest,
-            "securityLevel": "2"]);
-        
+        auto notImmutableBinData = cast(ubyte[]) binData;
+        File fileInsert = File(userId, notImmutableBinData, fileName, dataDigest);
+
+        files.insert([fileInsert]);
+
         return FileRet.OK;
     }
 
@@ -170,34 +188,40 @@ struct DBConnection
         MongoCollection files = client.getCollection(dbName ~ ".files");
 
         auto result = files.find(["userId": userId]);
-        // TODO
-        // File[] fileResult;
-        // foreach(r; result) {
-        //     fileResult
-        // }
-        return [File()];
+
+        File[] filesResult = [];
+        File file;
+
+        foreach (r; result)
+        {
+            deserializeBson(file, r);
+            filesResult ~= file;
+        }
+        return filesResult;
     }
 
     Nullable!File getFile(string digest)
-    in(!digest.empty)
+    in (!digest.empty)
     do
     {
         MongoCollection files = client.getCollection(dbName ~ ".files");
 
-        auto result = files.findOne(["digest": digest]);
+        auto oneResult = files.findOne(["digest": digest]);
+        // TODo
 
-        // TODO
-        Nullable!File file;
-        deserializeBson(file, result);
-        return file;
+        if (oneResult == Bson(null))
+            return Nullable!File();
+
+        File file;
+        deserializeBson(file, oneResult);
+        return Nullable!File(file);
     }
 
     void deleteFile(string digest)
-    in(!digest.empty)
+    in (!digest.empty)
     do
     {
         MongoCollection files = client.getCollection(dbName ~ ".files");
-
         files.remove(["digest": digest]);
     }
 
@@ -208,6 +232,16 @@ struct DBConnection
         string addr;
         string securityLevel;
         string[] aliases;
+
+        this(string userId, string addr)
+        {
+            auto bsonObjectID = BsonObjectID.generate();
+            this.id = bsonObjectID;
+            this.userId = userId;
+            this.addr = addr;
+            this.securityLevel = "3";
+            this.aliases = ["alias1", "alias2", "alias3"];
+        }
     }
 
     enum UrlRet
@@ -221,20 +255,18 @@ struct DBConnection
     UrlRet addUrl(string userId, string urlAddress)
     {
 
-        if(urlAddress == null)
+        if (urlAddress == null)
             return UrlRet.ERR_EMPTY_URL;
 
-        
         MongoCollection urls = client.getCollection(dbName ~ ".urls");
 
-        string[] aliases = ["alias1", "alies2", "alias3"];
+        auto result = urls.findOne(["addr": urlAddress]);
 
-        auto result = urls.findOne(["urlAddress": urlAddress]);
+        if (result != Bson(null))
+            return UrlRet.URL_EXISTS;
 
-        // if(result != null)
-        //     return UrlRet.URL_EXISTS;
-        
-        urls.insert(["userId": userId, "urlAddress": urlAddress, "securityLevel": "3", "aliases": cast(char[])aliases]);
+        Url urlInsert = Url(userId, urlAddress);
+        urls.insert([urlInsert]);
 
         return UrlRet.OK;
 
@@ -242,26 +274,41 @@ struct DBConnection
 
     Url[] getUrls(string userId)
     {
-        // TODO
-        return [Url()];
+        MongoCollection urls = client.getCollection(dbName ~ ".urls");
+        auto result = urls.find(["userId": userId]);
+
+        Url[] urlsResult = [];
+        Url url;
+
+        foreach (r; result)
+        {
+            deserializeBson(url, r);
+            urlsResult ~= url;
+        }
+        return urlsResult;
     }
 
     Nullable!Url getUrl(string urlAddress)
-    in(!urlAddress.empty)
+    in (!urlAddress.empty)
     do
     {
-         MongoCollection urls = client.getCollection(dbName ~ ".urls");
-        auto result = urls.findOne(["urlAddress": urlAddress]);
-        // TODO
-        Nullable!Url url;
-        return url;
+        MongoCollection urls = client.getCollection(dbName ~ ".urls");
+        auto result = urls.findOne(["addr": urlAddress]);
+        
+        if(result == Bson(null))
+            return Nullable!Url();
+
+        Url resultUrl;
+        deserializeBson(resultUrl, result);
+
+        return Nullable!Url(resultUrl);
     }
 
     void deleteUrl(string urlAddress)
-    in(!urlAddress.empty)
+    in (!urlAddress.empty)
     do
     {
-         MongoCollection urls = client.getCollection(dbName ~ ".urls");        
-        urls.remove(["urlAddress": urlAddress]);
+        MongoCollection urls = client.getCollection(dbName ~ ".urls");
+        urls.remove(["addr": urlAddress]);
     }
 }
