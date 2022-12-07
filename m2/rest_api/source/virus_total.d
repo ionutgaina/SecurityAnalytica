@@ -228,20 +228,32 @@ override:
 
     Json getFileInfo(string fileSHA512Digest)
     {
-        // TODO
-        throw new HTTPStatusException(HTTPStatus.internalServerError, "[Internal Server Error] user action not defined");
+          auto response = dbClient.getFile(fileSHA512Digest);
+
+        if (response.isNull()) {
+            throw new HTTPStatusException(HTTPStatus.notFound, "[NotFound] not found");
+        }
+
+
+        return serializeToJson(response);
     }
 
     Json getUserFiles(string userEmail)
     {
-        // TODO
-        throw new HTTPStatusException(HTTPStatus.internalServerError, "[Internal Server Error] user action not defined");
+        auto response = dbClient.getFiles(userEmail);
+
+        return serializeToJson(response);
     }
 
     Json deleteFile(string userEmail, string fileSHA512Digest)
     {
-        // TODO
-        throw new HTTPStatusException(HTTPStatus.internalServerError, "[Internal Server Error] user action not defined");
+
+        if(fileSHA512Digest == null) {
+            throw new HTTPStatusException(HTTPStatus.badRequest, "[BadRequest] empty url");
+        }
+
+        dbClient.deleteFile(userEmail, fileSHA512Digest);
+        throw new HTTPStatusException(HTTPStatus.OK, "[OK] success");
     }
 
 private:
