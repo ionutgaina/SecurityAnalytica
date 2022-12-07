@@ -7,6 +7,7 @@ import vibe.d;
 import vibe.web.auth;
 
 import dauth;
+import vibe.data.json;
 
 import db_conn;
 
@@ -107,9 +108,7 @@ override:
             throw new HTTPStatusException(HTTPStatus.badRequest, "[Bad Request] password is mandatory");
         
 
-        auto inputPassHash = makeHash(toPassword(password.dup)).toString();
-
-        auto response = dbClient.addUser(userEmail, username, inputPassHash, name, desc);
+        auto response = dbClient.addUser(userEmail, username, password, name, desc);
 
         switch (response) {
             case dbClient.UserRet.OK:
@@ -126,18 +125,19 @@ override:
 
     Json authUser(string userEmail, string password)
     {
-        auto response = dbClient.authUser(userEmail, password);
+        auto response = dbClient.authUser(userEmail, password.dup);
 
         switch (response) {
             case dbClient.UserRet.OK:
-                // throw new HTTPStatusException(HTTPStatus.OK, "[OK] user is created");
-                auto AccessToken = dbClient.generateUserAccessToken(userEmail);
-                return AccessToken.serializeToJson();
+                auto accessToken = dbClient.generateUserAccessToken(userEmail);
+                auto j = Json(["AccessToken": Json(accessToken)]);
+                return j;
             case dbClient.UserRet.ERR_NULL_PASS:
                 throw new HTTPStatusException(HTTPStatus.badRequest, "[Bad Request] password is mandatory");
             case dbClient.UserRet.ERR_INVALID_EMAIL:
                 throw new HTTPStatusException(HTTPStatus.badRequest, "[Bad Request] email is invalid");
             case dbClient.UserRet.ERR_WRONG_PASS:
+            case dbClient.UserRet.ERR_WRONG_USER:
                 throw new HTTPStatusException(HTTPStatus.unauthorized, "[Unathorized] wrong email/password");
             default:
                 throw new HTTPStatusException(HTTPStatus.internalServerError, 
@@ -147,17 +147,17 @@ override:
 
     Json deleteUser(string userEmail)
     {
-        // auto response = dbClient.deleteUser(userEmail);
+        auto response = dbClient.deleteUser(userEmail);
 
-        // switch (response) {
-        //     case dbClient.UserRet.OK:
-        //         throw new HTTPStatusException(HTTPStatus.OK, "[OK] user is created");
-        //     case dbClient.UserRet.ERR_INVALID_EMAIL:
-        //         throw new HTTPStatusException(HTTPStatus.badRequest, "[Bad Request] email is invalid");
-        //     default:
+        switch (response) {
+            case dbClient.UserRet.OK:
+                throw new HTTPStatusException(HTTPStatus.OK, "[OK] user is created");
+            case dbClient.UserRet.ERR_INVALID_EMAIL:
+                throw new HTTPStatusException(HTTPStatus.badRequest, "[Bad Request] email is invalid");
+            default:
                 throw new HTTPStatusException(HTTPStatus.internalServerError, 
                 "[Internal Server Error] user action not defined");
-        // }
+        }
     }
 
     // URLs management

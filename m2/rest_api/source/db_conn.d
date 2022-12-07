@@ -85,15 +85,15 @@ struct DBConnection
         }
 
         // TODO: Hash and salt the password before inserting it into the database.
+        auto inputPassHash = makeHash(toPassword(password.dup)).toString();
         users.insert(["_id": email,
                       "username": username,
-                      "password": password,
+                      "password": inputPassHash,
                       "name": name,
                       "desc": desc]);
 
         // Query the database so that the above insertion propagates its effect.
         users.findOne(["_id": email]);
-
         return UserRet.OK;
     }
 
@@ -174,7 +174,10 @@ struct DBConnection
         }
 
         // TODO: Verify the given password against the hashed password.
-        if (res["password"].toString().strip("\"") != password)
+        auto dbPass = res["password"].toString.strip("\"");
+        auto userSalt = parseHash(dbPass).salt;
+        auto inputPassHash = makeHash(toPassword(password.dup), userSalt);
+        if (dbPass != inputPassHash.toString())
         {
             return UserRet.ERR_WRONG_PASS;
         }
