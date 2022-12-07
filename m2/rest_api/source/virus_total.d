@@ -6,6 +6,8 @@ import std.stdio;
 import vibe.d;
 import vibe.web.auth;
 
+import dauth;
+
 import db_conn;
 
 static struct AuthInfo
@@ -100,20 +102,62 @@ override:
 
     Json addUser(string userEmail, string username, string password, string name = "", string desc = "")
     {
-        // TODO
-       throw new HTTPStatusException(HTTPStatus.internalServerError, "[Internal Server Error] user action not defined");
+
+        if (password == null)
+            throw new HTTPStatusException(HTTPStatus.badRequest, "[Bad Request] password is mandatory");
+        
+
+        auto inputPassHash = makeHash(toPassword(password.dup)).toString();
+
+        auto response = dbClient.addUser(userEmail, username, inputPassHash, name, desc);
+
+        switch (response) {
+            case dbClient.UserRet.OK:
+                throw new HTTPStatusException(HTTPStatus.OK, "[OK] user is created");
+            case dbClient.UserRet.ERR_INVALID_EMAIL:
+                throw new HTTPStatusException(HTTPStatus.badRequest, "[Bad Request] email is invalid");
+            case dbClient.UserRet.ERR_USER_EXISTS:
+                throw new HTTPStatusException(HTTPStatus.unauthorized, "[Unathorized] user is was created");
+            default:
+                throw new HTTPStatusException(HTTPStatus.internalServerError, 
+                "[Internal Server Error] user action not defined");
+        }
     }
 
     Json authUser(string userEmail, string password)
     {
-        // TODO
-        throw new HTTPStatusException(HTTPStatus.internalServerError, "[Internal Server Error] user action not defined");
+        auto response = dbClient.authUser(userEmail, password);
+
+        switch (response) {
+            case dbClient.UserRet.OK:
+                // throw new HTTPStatusException(HTTPStatus.OK, "[OK] user is created");
+                auto AccessToken = dbClient.generateUserAccessToken(userEmail);
+                return AccessToken.serializeToJson();
+            case dbClient.UserRet.ERR_NULL_PASS:
+                throw new HTTPStatusException(HTTPStatus.badRequest, "[Bad Request] password is mandatory");
+            case dbClient.UserRet.ERR_INVALID_EMAIL:
+                throw new HTTPStatusException(HTTPStatus.badRequest, "[Bad Request] email is invalid");
+            case dbClient.UserRet.ERR_WRONG_PASS:
+                throw new HTTPStatusException(HTTPStatus.unauthorized, "[Unathorized] wrong email/password");
+            default:
+                throw new HTTPStatusException(HTTPStatus.internalServerError, 
+                "[Internal Server Error] user action not defined");
+        }
     }
 
     Json deleteUser(string userEmail)
     {
-        // TODO
-        throw new HTTPStatusException(HTTPStatus.internalServerError, "[Internal Server Error] user action not defined");
+        // auto response = dbClient.deleteUser(userEmail);
+
+        // switch (response) {
+        //     case dbClient.UserRet.OK:
+        //         throw new HTTPStatusException(HTTPStatus.OK, "[OK] user is created");
+        //     case dbClient.UserRet.ERR_INVALID_EMAIL:
+        //         throw new HTTPStatusException(HTTPStatus.badRequest, "[Bad Request] email is invalid");
+        //     default:
+                throw new HTTPStatusException(HTTPStatus.internalServerError, 
+                "[Internal Server Error] user action not defined");
+        // }
     }
 
     // URLs management
