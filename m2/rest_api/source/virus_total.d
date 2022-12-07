@@ -164,34 +164,66 @@ override:
 
     Json addUrl(string userEmail, string urlAddress)
     {
-        // TODO
-        throw new HTTPStatusException(HTTPStatus.internalServerError, "[Internal Server Error] user action not defined");
+        auto response = dbClient.addUrl(userEmail, urlAddress);
+
+        switch (response) {
+            case dbClient.UrlRet.OK:
+            case dbClient.UrlRet.URL_EXISTS:
+                throw new HTTPStatusException(HTTPStatus.OK, "[OK] success");
+            case dbClient.UrlRet.ERR_EMPTY_URL:
+                throw new HTTPStatusException(HTTPStatus.badRequest, "[BadRequest] empty url");
+            default:
+                throw new HTTPStatusException(HTTPStatus.internalServerError, 
+                "[Internal Server Error] user action not defined");
+        }
     }
 
     Json deleteUrl(string userEmail, string urlAddress)
     {
-        // TODO
-        throw new HTTPStatusException(HTTPStatus.internalServerError, "[Internal Server Error] user action not defined");
+
+        if(urlAddress == null) {
+            throw new HTTPStatusException(HTTPStatus.badRequest, "[BadRequest] empty url");
+        }
+
+        dbClient.deleteUrl(userEmail, urlAddress);
+        throw new HTTPStatusException(HTTPStatus.OK, "[OK] success");
     }
 
     Json getUrlInfo(string urlAddress)
     {
-        // TODO
-        throw new HTTPStatusException(HTTPStatus.internalServerError, "[Internal Server Error] user action not defined");
+        auto response = dbClient.getUrl(urlAddress);
+
+        if (response.isNull()) {
+            throw new HTTPStatusException(HTTPStatus.notFound, "[NotFound] not found");
+        }
+
+
+        return serializeToJson(response);
     }
 
     Json getUserUrls(string userEmail)
     {
-        // TODO
-        throw new HTTPStatusException(HTTPStatus.internalServerError, "[Internal Server Error] user action not defined");
+        auto response = dbClient.getUrls(userEmail);
+
+        return serializeToJson(response);
     }
 
     // Files management
 
     Json addFile(string userEmail, immutable ubyte[] binData, string fileName)
     {
-        // TODO
-        throw new HTTPStatusException(HTTPStatus.internalServerError, "[Internal Server Error] user action not defined");
+        auto response = dbClient.addFile(userEmail, binData, fileName);
+
+        switch (response) {
+            case dbClient.FileRet.OK:
+            case dbClient.FileRet.FILE_EXISTS:
+                throw new HTTPStatusException(HTTPStatus.OK, "[OK] success");
+            case dbClient.FileRet.ERR_EMPTY_FILE:
+                throw new HTTPStatusException(HTTPStatus.badRequest, "[BadRequest] empty file");
+            default:
+                throw new HTTPStatusException(HTTPStatus.internalServerError, 
+                "[Internal Server Error] user action not defined");
+        }
     }
 
     Json getFileInfo(string fileSHA512Digest)
