@@ -84,7 +84,7 @@ struct DBConnection
             return UserRet.ERR_USER_EXISTS;
         }
 
-        // TODO: Hash and salt the password before inserting it into the database.
+        // Hash and salt the password before inserting it into the database.
         auto inputPassHash = makeHash(toPassword(password.dup)).toString();
         users.insert(["_id": email,
                       "username": username,
@@ -173,7 +173,7 @@ struct DBConnection
             return UserRet.ERR_WRONG_USER;
         }
 
-        // TODO: Verify the given password against the hashed password.
+        // Verify the given password against the hashed password.
         auto dbPass = res["password"].toString.strip("\"");
         auto userSalt = parseHash(dbPass).salt;
         auto inputPassHash = makeHash(toPassword(password.dup), userSalt);
