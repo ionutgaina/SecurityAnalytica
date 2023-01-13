@@ -1,5 +1,4 @@
-import axios from "axios";
-import { API_URL } from "../constants";
+import { instance } from "../constants";
 
 export interface IUserRegister {
   userEmail: string;
@@ -13,11 +12,6 @@ export interface IUserLogin {
   userEmail: string;
   password: string;
 }
-
-const instance = axios.create({
-  baseURL: API_URL,
-  headers: {'Content-Type': 'application/json'},
-});
 
 export function register(user: IUserRegister) {
   return instance.post("/signup", user);

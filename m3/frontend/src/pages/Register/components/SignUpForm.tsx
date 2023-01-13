@@ -50,7 +50,7 @@ export default function SignInForm(props: ISignInFormProps) {
         {
           name: 'password_confirmation',
           initialValue: '',
-          label: 'Confirmare parola',
+          label: 'Password confirmation',
           type: 'password',
           placeholder: '',
           validation: Yup.string()

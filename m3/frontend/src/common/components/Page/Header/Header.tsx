@@ -29,9 +29,12 @@ export default function Header() {
                   </Nav.Link>
                 </>
               ) : (
-                <Nav.Link as={Link} to="logout">
-                  Logout
-                </Nav.Link>
+                <>
+                  <Nav.Link as={Link} to="/profile" className="text-white">My Profile</Nav.Link>
+                  <Nav.Link as={Link} to="/logout">
+                    Logout
+                  </Nav.Link>
+                </>
               )}
             </Nav>
           </Navbar.Collapse>

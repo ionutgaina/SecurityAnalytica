@@ -3,7 +3,7 @@ import './CustomButton.css';
 interface IButtonProps {
   text: string;
   onClick?: React.MouseEventHandler<HTMLButtonElement> | undefined;
-  type: 'button' | 'submit' | 'reset' | undefined;
+  type?: 'button' | 'submit' | 'reset';
 }
 
 export default function CustomButton({ text, onClick, type }: IButtonProps) {

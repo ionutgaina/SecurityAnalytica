@@ -41,6 +41,7 @@ export default function LoginForm(props: ILoginFormProps) {
 
           console.log(data);
           localStorage.setItem("accessToken", data.data.AccessToken);
+          localStorage.setItem("userEmail", values.userEmail);
 
           // success message
           const response = "Login successful.";
