@@ -24,3 +24,7 @@ export function login(user: IUserLogin) {
 export function hasToken() {
   return !!localStorage.getItem("accessToken");
 }
+
+export function getUserEmail() {
+  return localStorage.getItem("userEmail") || "";
+}

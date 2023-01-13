@@ -1,14 +1,12 @@
 .mybutton {
   appearance: button;
-  background-color: #1652F0;
+  background-color: transparent;
   border: 1px solid #1652F0;
-  border-radius: 4px;
+  border-radius: 1rem;
   box-sizing: border-box;
   color: #FFFFFF;
   cursor: pointer;
-  line-height: 1.15;
   overflow: visible;
-  padding: 0.2rem 0.5rem;
   text-align: center;
   text-transform: none;
   transition: all 80ms ease-in-out;
@@ -27,18 +25,16 @@
 }
 
 .mybutton:hover {
+  color:#FFFFFF!important;
   background-color: #0A46E4;
   border-color: #0A46E4;
 }
 
-.mybutton:active {
-  background-color: #0039D7;
-  border-color: #0039D7;
+.text{
+  text-align: center;
+  color: #1652F0;
 }
 
-.text{
-  font-size: 0.5rem;
-  text-align: center;
+.mybutton:hover .text {
   color: #FFFFFF;
-  text-transform: none;
 }

@@ -15,10 +15,18 @@ export default function Header() {
     <>
       <Navbar collapseOnSelect expand="lg" bg="dark" variant="dark">
         <Container>
-          <Navbar.Brand href="/">SecurityAnalitica</Navbar.Brand>
+          <Navbar.Brand as={Link} to="/">
+            SecurityAnalytica
+          </Navbar.Brand>
           <Navbar.Toggle aria-controls="responsive-navbar-nav text-white" />
           <Navbar.Collapse id="responsive-navbar-nav text-white">
             <Nav className="justify-content-end flex-grow-1 pe-3 text-white">
+              <Nav.Link as={Link} to="/" className="text-white">
+                Analyze and Secure
+              </Nav.Link>
+              <Nav.Link as={Link} to="/" className="text-white">
+                Search users
+              </Nav.Link>
               {!hasToken() ? (
                 <>
                   <Nav.Link className="text-white" onClick={() => setLoginShow(true)}>
@@ -30,7 +38,9 @@ export default function Header() {
                 </>
               ) : (
                 <>
-                  <Nav.Link as={Link} to="/profile" className="text-white">My Profile</Nav.Link>
+                  <Nav.Link as={Link} to="/profile" className="text-white">
+                    My Profile
+                  </Nav.Link>
                   <Nav.Link as={Link} to="/logout">
                     Logout
                   </Nav.Link>

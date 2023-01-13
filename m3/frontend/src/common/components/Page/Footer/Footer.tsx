@@ -53,7 +53,7 @@ export default function Footer() {
           © 2023 Copyright:
           <br></br>
           <a className="text-decoration-none text-white" href="#">
-            &nbsp;SecurityAnalitica
+            &nbsp;SecurityAnalytica
           </a>
         </div>
       </div>
