@@ -3,6 +3,8 @@ import Swal from "sweetalert2";
 import { getUserFiles, IFileInfo } from "../../common/api/files";
 import { getUserUrls, IUrlInfo } from "../../common/api/url";
 import CustomButton from "../../common/components/CustomButton/CustomButton";
+import FileInfoModal from "../../common/components/InfoModals/FileInfoModal";
+import UrlInfoModal from "../../common/components/InfoModals/UrlInfoModal";
 import Page from "../../common/components/Page/Page";
 import "./SearchUser.css";
 
@@ -24,6 +26,17 @@ export function SearchUser() {
   const [UrlInfoModalData, setUrlInfoModalData] = useState<IUrlInfo | null>(null);
   // End modals state
 
+  const urlInfoHandler = (urlInfo: IUrlInfo) => {
+    setUrlInfoModalData(urlInfo);
+    setShowUrlInfoModal(true);
+  };
+
+  const fileInfoHandler = (fileInfo: IFileInfo) => {
+    setFileInfoModalData(fileInfo);
+    setShowFileInfoModal(true);
+  };
+
+
   const searchHandler = async () => {
     console.log(userEmailInput);
     if (!verifyEmail(userEmailInput)) {
@@ -34,6 +47,8 @@ export function SearchUser() {
         showConfirmButton: false,
         timer: 2500,
       });
+      setUserData(null);
+      setUserEmail("");
       return;
     }
 
@@ -98,7 +113,7 @@ export function SearchUser() {
                       <h3>URLs</h3>
                       <ul className="list-group">
                         {userData?.urls?.map((url) => (
-                          <li className="list-group-item" key={url._id}>
+                          <li onClick={() => urlInfoHandler(url)} className="list-group-item" key={url._id}>
                             {url.addr}
                           </li>
                         ))}
@@ -112,7 +127,7 @@ export function SearchUser() {
                       <h3>Files</h3>
                       <ul className="list-group">
                         {userData?.files?.map((file) => (
-                          <li className="list-group-item" key={file._id}>
+                          <li onClick={() => fileInfoHandler(file)} className="list-group-item" key={file._id}>
                             {file.fileName}
                           </li>
                         ))}
@@ -129,6 +144,29 @@ export function SearchUser() {
           )}
         </>
       </Page>
+
+           {/* Modals */}
+           {UrlInfoModalData && (
+        <UrlInfoModal
+          show={showUrlInfoModal}
+          onHide={() => {
+            setShowUrlInfoModal(false);
+            setUrlInfoModalData(null);
+          }}
+          urlInfo={UrlInfoModalData}
+        />
+      )}
+
+      {FileInfoModalData && (
+        <FileInfoModal
+          show={showFileInfoModal}
+          onHide={() => {
+            setShowFileInfoModal(false);
+            setFileInfoModalData(null);
+          }}
+          fileInfo={FileInfoModalData}
+        />
+      )}
     </>
   );
 }

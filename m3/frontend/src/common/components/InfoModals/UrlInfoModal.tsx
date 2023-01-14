@@ -5,10 +5,11 @@ interface UrlInfoModalProps {
   show: boolean;
   onHide: () => void;
   urlInfo: IUrlInfo;
+  deleteAction?: (urlAddr: string) => void;
 }
 
 export default function UrlInfoModal(props: UrlInfoModalProps) {
-  const { urlInfo, ...rest } = props;
+  const { urlInfo, deleteAction, ...rest } = props;
 
   return (
     <Modal {...rest} size="lg" aria-labelledby="contained-modal-title-vcenter" centered>
@@ -37,6 +38,13 @@ export default function UrlInfoModal(props: UrlInfoModalProps) {
           }
         />
       </Modal.Body>
+      {deleteAction && (
+        <Modal.Footer>
+          <button onClick={() => deleteAction(urlInfo.addr)} className="btn btn-danger">
+            Delete the URL
+          </button>
+        </Modal.Footer>
+      )}
     </Modal>
   );
 }

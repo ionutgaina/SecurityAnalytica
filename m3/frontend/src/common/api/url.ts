@@ -51,10 +51,9 @@ export interface IDeleteUrl {
 }
 
 export function deleteUrl(urlData: IDeleteUrl) {
-  return instance.delete("/delete_url", {
-    data: urlData,
+  return instance.post("/delete_url", urlData, {
     headers: {
-      AccessToken: localStorage.getItem("accessToken") || "",
+      "AccessToken": localStorage.getItem("accessToken") || "",
     },
   });
 }

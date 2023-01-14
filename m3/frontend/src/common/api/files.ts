@@ -38,9 +38,21 @@ export interface IGetUserUrls {
   userEmail: string;
 }
 
-
 export function getUserFiles(data: IGetUserUrls) {
   return instance.get<IFileInfo[]>("/user_files", {
     params: data,
+  });
+}
+
+export interface IDeleteFile {
+  userEmail: string;
+  fileSHA512Digest: string;
+}
+
+export function deleteFile(fileData: IDeleteFile) {
+  return instance.post("/delete_file", fileData, {
+    headers: {
+      AccessToken: localStorage.getItem("accessToken") || "",
+    },
   });
 }

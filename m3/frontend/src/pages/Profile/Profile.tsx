@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { deleteUser } from "../../common/api/profile";
 import Page from "../../common/components/Page/Page";
+import { UserData } from "./UserData";
 
 export function Profile() {
   const nav = useNavigate();
@@ -23,7 +24,7 @@ export function Profile() {
           nav("/logout");
         } else {
           try {
-            await deleteUser({userEmail});
+            await deleteUser({ userEmail });
             Swal.fire("Deleted!", "Your file has been deleted.", "success");
             nav("/logout");
           } catch (e: any) {
@@ -39,15 +40,18 @@ export function Profile() {
 
   return (
     <Page>
-      <Card className="m-auto border-0" style={{ width: "18rem" }}>
-        <ListGroup variant="flush">
-          <ListGroup.Item>
-            <button onClick={() => deleteMyUser()} className="btn btn-danger">
-              Delete my profile
-            </button>
-          </ListGroup.Item>
-        </ListGroup>
-      </Card>
+      <>
+        <UserData />
+        <Card className="m-auto border-0" style={{ width: "18rem" }}>
+          <ListGroup variant="flush">
+            <ListGroup.Item>
+              <button onClick={() => deleteMyUser()} className="btn btn-danger">
+                Delete my profile
+              </button>
+            </ListGroup.Item>
+          </ListGroup>
+        </Card>
+      </>
     </Page>
   );
 }
