@@ -24,8 +24,8 @@ export default function Header() {
               <Nav.Link as={Link} to="/" className="text-white">
                 Analyze and Secure
               </Nav.Link>
-              <Nav.Link as={Link} to="/" className="text-white">
-                Search users
+              <Nav.Link as={Link} to="/search_user" className="text-white">
+                Search user
               </Nav.Link>
               {!hasToken() ? (
                 <>

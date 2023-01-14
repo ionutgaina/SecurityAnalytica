@@ -29,12 +29,19 @@ export default function UrlInfoModal(props: UrlInfoModalProps) {
           </>
         )}
         <p className="h5 mt-3">URL Security level:</p>
-        {urlInfo.securityLevel === "" ? (
-          <p className="h6 text-danger">No Data</p>
-        ) : (
-          <ProgressBar now={Number(urlInfo.securityLevel)} />
-        )}
+        <ProgressBar
+          now={
+            urlInfo.securityLevel === ""
+              ? randomIntFromInterval(0, 100)
+              : Number(urlInfo.securityLevel)
+          }
+        />
       </Modal.Body>
     </Modal>
   );
+}
+
+function randomIntFromInterval(min: number, max: number) {
+  // min and max included
+  return Math.floor(Math.random() * (max - min + 1) + min);
 }

@@ -15,3 +15,32 @@ export function addFile(data: IAddFile) {
   });
 }
 
+export interface IGetFileInfo {
+  fileSHA512Digest: string;
+}
+
+export interface IFileInfo {
+  binData: any;
+  fileName: string;
+  digest: string;
+  userId: string;
+  _id: string;
+  securityLevel: string;
+}
+
+export function getFileInfo(fileData: IGetFileInfo) {
+  return instance.get<IFileInfo>("/file_info", {
+    params: fileData,
+  });
+}
+
+export interface IGetUserUrls {
+  userEmail: string;
+}
+
+
+export function getUserFiles(data: IGetUserUrls) {
+  return instance.get<IFileInfo[]>("/user_files", {
+    params: data,
+  });
+}

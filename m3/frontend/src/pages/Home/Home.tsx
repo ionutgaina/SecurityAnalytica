@@ -3,10 +3,10 @@ import { useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
 import Swal from "sweetalert2";
 import { getUserEmail, hasToken } from "../../common/api/auth";
-import { addFile } from "../../common/api/files";
+import { addFile, getFileInfo, IFileInfo } from "../../common/api/files";
 import { addUrl, getUrlInfo, IUrlInfo } from "../../common/api/url";
 import CustomButton from "../../common/components/CustomButton/CustomButton";
-import { FileInfoModal } from "../../common/components/InfoModals/FileInfoModal";
+import FileInfoModal from "../../common/components/InfoModals/FileInfoModal";
 import UrlInfoModal from "../../common/components/InfoModals/UrlInfoModal";
 import Page from "../../common/components/Page/Page";
 import "./Home.css";
@@ -25,7 +25,7 @@ export default function Home() {
 
   // Modals state
   const [showFileInfoModal, setShowFileInfoModal] = useState<boolean>(false);
-  const [FileInfoModalData, setFileInfoModalData] = useState<any>(null);
+  const [FileInfoModalData, setFileInfoModalData] = useState<IFileInfo | null>(null);
 
   const [showUrlInfoModal, setShowUrlInfoModal] = useState<boolean>(false);
   const [UrlInfoModalData, setUrlInfoModalData] = useState<IUrlInfo | null>(null);
@@ -49,43 +49,36 @@ export default function Home() {
           showConfirmButton: false,
           timer: 2500,
         });
-      } else
-      {
-          const reader = new FileReader();
-          reader.readAsArrayBuffer(file);
-          let binData: number[] = [];
-          reader.onload = async (e) => {
-            const fileData = new Uint8Array(reader.result as ArrayBuffer);
+      } else {
+        const reader = new FileReader();
+        reader.readAsArrayBuffer(file);
+        reader.onload = async (e) => {
+          const fileData = new Uint8Array(reader.result as ArrayBuffer);
 
-            // for (var i = 0; i < fileData.length; i++) {
-            //   binData.push(fileData[i]);
-            // }
+          try {
+            let hash = sha512.create();
+            hash.update(fileData);
+            let hashValue = hash.hex().toUpperCase();
 
-            try {
-              // const response = await addFile({
-              //   userEmail: getUserEmail(),
-              //   binData: binData,
-              //   fileName: file.name,
-              // });
-              let hash = sha512.create();
-              hash.update(fileData);
-              let hashValue = hash.hex();
-              console.log(hashValue);
-              setFile(null);
-             // TO DO merge deci pohui mai departe rupem
-            } catch (e: any) {
-              let response = e.response?.data?.statusMessage;
-              response = response.replace("[Error] ", "");
+            await getFileInfo({
+              fileSHA512Digest: hashValue,
+            }).then((res: any) => {
+              setFileInfoModalData(res.data);
+              setShowFileInfoModal(true);
+            });
+          } catch (e: any) {
+            let response = e.response?.data?.statusMessage;
+            response = response.replace("[Error] ", "");
 
-              Swal.fire({
-                title: "Error",
-                text: response,
-                icon: "error",
-                showConfirmButton: false,
-                timer: 2500,
-              });
-            }
-          };
+            Swal.fire({
+              title: "Error",
+              text: response,
+              icon: "error",
+              showConfirmButton: false,
+              timer: 2500,
+            });
+          }
+        };
       }
     }
     if (optionSelect == "url") {
@@ -103,9 +96,8 @@ export default function Home() {
             urlAddress: url,
           }).then((res) => {
             setUrlInfoModalData(res.data);
+            setShowUrlInfoModal(true);
           });
-
-          setShowUrlInfoModal(true);
         } catch (e: any) {
           let response = e.response?.data?.statusMessage;
           response = response.replace("[Error] ", "");
@@ -327,6 +319,17 @@ export default function Home() {
             setUrlInfoModalData(null);
           }}
           urlInfo={UrlInfoModalData}
+        />
+      )}
+
+      {FileInfoModalData && (
+        <FileInfoModal
+          show={showFileInfoModal}
+          onHide={() => {
+            setShowFileInfoModal(false);
+            setFileInfoModalData(null);
+          }}
+          fileInfo={FileInfoModalData}
         />
       )}
     </>

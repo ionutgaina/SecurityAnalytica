@@ -35,8 +35,12 @@ export interface IGetUserUrls {
   userEmail: string;
 }
 
+// export interface IUserUrls {
+//   urls: IUrlInfo[];
+// }
+
 export function getUserUrls(userData: IGetUserUrls) {
-  return instance.get("/user_urls", {
+  return instance.get<IUrlInfo[]>("/user_urls", {
     params: userData,
   });
 }
