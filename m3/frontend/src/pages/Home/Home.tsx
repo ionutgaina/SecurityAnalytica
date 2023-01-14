@@ -1,7 +1,9 @@
+import { sha512 } from "js-sha512";
 import { useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
 import Swal from "sweetalert2";
 import { getUserEmail, hasToken } from "../../common/api/auth";
+import { addFile } from "../../common/api/files";
 import { addUrl, getUrlInfo, IUrlInfo } from "../../common/api/url";
 import CustomButton from "../../common/components/CustomButton/CustomButton";
 import { FileInfoModal } from "../../common/components/InfoModals/FileInfoModal";
@@ -11,7 +13,7 @@ import "./Home.css";
 
 export default function Home() {
   // File and Url state
-  const [file, setFile] = useState<any>(null);
+  const [file, setFile] = useState<File | null>(null);
   const handleChange = (file: any) => {
     setFile(file);
   };
@@ -39,10 +41,54 @@ export default function Home() {
 
   async function analyzeHandler() {
     if (optionSelect == "file") {
-      console.log("analyze file");
+      if (file == null) {
+        Swal.fire({
+          title: "Error",
+          text: "No file uploaded",
+          icon: "error",
+          showConfirmButton: false,
+          timer: 2500,
+        });
+      } else
+      {
+          const reader = new FileReader();
+          reader.readAsArrayBuffer(file);
+          let binData: number[] = [];
+          reader.onload = async (e) => {
+            const fileData = new Uint8Array(reader.result as ArrayBuffer);
+
+            // for (var i = 0; i < fileData.length; i++) {
+            //   binData.push(fileData[i]);
+            // }
+
+            try {
+              // const response = await addFile({
+              //   userEmail: getUserEmail(),
+              //   binData: binData,
+              //   fileName: file.name,
+              // });
+              let hash = sha512.create();
+              hash.update(fileData);
+              let hashValue = hash.hex();
+              console.log(hashValue);
+              setFile(null);
+             // TO DO merge deci pohui mai departe rupem
+            } catch (e: any) {
+              let response = e.response?.data?.statusMessage;
+              response = response.replace("[Error] ", "");
+
+              Swal.fire({
+                title: "Error",
+                text: response,
+                icon: "error",
+                showConfirmButton: false,
+                timer: 2500,
+              });
+            }
+          };
+      }
     }
     if (optionSelect == "url") {
-      console.log("analyze url");
       if (!verifyUrl()) {
         Swal.fire({
           title: "Error",
@@ -50,8 +96,6 @@ export default function Home() {
           icon: "error",
           showConfirmButton: false,
           timer: 2500,
-        }).then(() => {
-          setUrl("");
         });
       } else {
         try {
@@ -79,10 +123,69 @@ export default function Home() {
   }
 
   async function addHandler() {
-    if (optionSelect == "file") {
-      console.log("add file");
-    }
+    if (file == null) {
+      console.log("invalid");
+      Swal.fire({
+        title: "Error",
+        text: "No file uploaded",
+        icon: "error",
+        showConfirmButton: false,
+        timer: 2500,
+      });
+    } else if (optionSelect == "file") {
+      const reader = new FileReader();
+      reader.readAsArrayBuffer(file);
+      let binData: number[] = [];
+      reader.onload = async (e) => {
+        const fileData = new Uint8Array(reader.result as ArrayBuffer);
 
+        for (var i = 0; i < fileData.length; i++) {
+          binData.push(fileData[i]);
+        }
+
+        try {
+          const response = await addFile({
+            userEmail: getUserEmail(),
+            binData: binData,
+            fileName: file.name,
+          });
+
+          if (response.data.search("is already present in the database") != -1) {
+            Swal.fire({
+              title: "Error",
+              text: "File is already present",
+              icon: "error",
+              showConfirmButton: false,
+              timer: 2500,
+            }).then(() => {
+              setFile(null);
+            });
+            return;
+          }
+
+          Swal.fire({
+            title: "Success",
+            text: "File added successfully",
+            icon: "success",
+            showConfirmButton: false,
+            timer: 2500,
+          }).then(() => {
+            setFile(null);
+          });
+        } catch (e: any) {
+          let response = e.response?.data?.statusMessage;
+          response = response.replace("[Error] ", "");
+
+          Swal.fire({
+            title: "Error",
+            text: response,
+            icon: "error",
+            showConfirmButton: false,
+            timer: 2500,
+          });
+        }
+      };
+    }
     if (optionSelect == "url") {
       if (!verifyUrl()) {
         console.log("invalid");
@@ -202,12 +305,12 @@ export default function Home() {
           )}
 
           {/* Buttons logic */}
-          {(file || optionSelect == "url") && (
-            <div className="m-2">
-              <CustomButton onClick={() => buttonHandler("analyze")} text="Analyze" />
-            </div>
-          )}
-          {(file || optionSelect == "url") && hasToken() && (
+
+          <div className="m-2">
+            <CustomButton onClick={() => buttonHandler("analyze")} text="Analyze" />
+          </div>
+
+          {hasToken() && (
             <div className="m-2">
               <CustomButton onClick={() => buttonHandler("add")} text={`Add ${optionSelect}`} />
             </div>
